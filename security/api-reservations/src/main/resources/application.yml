@@ -20,7 +20,7 @@ server:
     mime-types: application/json,application/xml,text/html,text/plain
 
   servlet:
-    context-path: /api
+    context-path: /api/flights
 
 info:
   application:
