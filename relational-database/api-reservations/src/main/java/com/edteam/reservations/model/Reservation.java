@@ -1,35 +1,28 @@
 package com.edteam.reservations.model;
 
 import com.edteam.reservations.listener.ReservationEntityListener;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityListeners;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
-@Entity
+@Table("reservation")
 @EntityListeners(ReservationEntityListener.class)
 public class Reservation extends Base {
 
-    @OrderBy("lastName ASC")
     @Valid
     @NotEmpty(message = "You need at least one passenger")
-    @OneToMany(fetch = FetchType.LAZY)
-    @Cascade(CascadeType.ALL)
-    @JoinColumn(name = "reservation_id")
     private List<Passenger> passengers;
 
     @Valid
-    @ManyToOne(fetch = FetchType.LAZY)
-    @Cascade(CascadeType.ALL)
-    @JoinColumn(name = "itinerary_id")
     private Itinerary itinerary;
 
-    @Column(name = "creation_date", nullable = false)
+    @Column(value = "creation_date")
     private LocalDate creationDate;
 
     public List<Passenger> getPassengers() {

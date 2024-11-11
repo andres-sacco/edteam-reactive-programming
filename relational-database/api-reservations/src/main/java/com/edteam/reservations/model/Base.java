@@ -1,17 +1,16 @@
 package com.edteam.reservations.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 
 import java.util.Objects;
 
-@MappedSuperclass
 public class Base {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Version
+    @Column(value = "version")
     Long version;
 
     public Long getId() {

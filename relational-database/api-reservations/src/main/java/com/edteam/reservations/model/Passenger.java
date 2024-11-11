@@ -1,35 +1,39 @@
 package com.edteam.reservations.model;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
-@Entity
+@Table
 public class Passenger extends Base {
 
     @Size(min = 1, max = 30)
     @NotBlank(message = "firstName is mandatory")
-    @Column(name = "first_name", nullable = false, length = 30)
+    @Column(value = "first_name")
     private String firstName;
 
     @Size(min = 1, max = 30)
     @NotBlank(message = "lastName is mandatory")
-    @Column(name = "last_name", nullable = false, length = 30)
+    @Column(value = "last_name")
     private String lastName;
 
-    @Column(name = "document_number", nullable = false)
+    @Column(value = "document_number")
     private String documentNumber;
 
-    @Column(name = "document_type", nullable = false)
+    @Column(value = "document_type")
     private String documentType;
 
     @Past(message = "birthday need to be a date in the past")
-    @Column(name = "birthday", nullable = false)
+    @Column(value = "birthday")
     private LocalDate birthday;
+
+    @Column("reservation_id")
+    private Long reservationId;
 
     public String getFirstName() {
         return firstName;
@@ -69,6 +73,14 @@ public class Passenger extends Base {
 
     public void setBirthday(LocalDate birthday) {
         this.birthday = birthday;
+    }
+
+    public Long getReservationId() {
+        return reservationId;
+    }
+
+    public void setReservationId(Long reservationId) {
+        this.reservationId = reservationId;
     }
 
     @Override

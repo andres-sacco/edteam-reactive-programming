@@ -45,14 +45,7 @@ spring:
     url: r2dbc:mysql://localhost:3312/flights_reservation
     username: root
     password: muppet
-  datasource:
-    url: jdbc:mysql://localhost:3312/flights_reservation
-    username: root
-    password: muppet
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
+
 
   flyway:
     locations: classpath:db

@@ -24,6 +24,7 @@ public class Itinerary extends Base {
     @JoinColumn(name = "itinerary_id")
     private Price price;
 
+
     public List<Segment> getSegment() {
         return segment;
     }
@@ -60,4 +61,5 @@ public class Itinerary extends Base {
     public String toString() {
         return "Itinerary{" + "id=" + getId() + ", segment=" + segment + ", price=" + price + '}';
     }
+
 }
