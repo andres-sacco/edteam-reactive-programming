@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public class CatalogConnector {
         this.configuration = configuration;
     }
 
-    public CityDTO getCity(String code) {
+    public Mono<CityDTO> getCity(String code) {
         LOGGER.info("calling to api-catalog");
 
         HostConfiguration hostConfiguration = configuration.getHosts().get(HOST);
@@ -57,7 +58,6 @@ public class CatalogConnector {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 
-        return client.get().uri(urlEncoder -> urlEncoder.build(code)).retrieve().bodyToMono(CityDTO.class).share()
-                .block();
+        return client.get().uri(urlEncoder -> urlEncoder.build(code)).retrieve().bodyToMono(CityDTO.class);
     }
 }
