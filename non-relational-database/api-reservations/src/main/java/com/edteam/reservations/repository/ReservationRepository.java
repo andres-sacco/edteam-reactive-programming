@@ -1,9 +1,8 @@
 package com.edteam.reservations.repository;
 
 import com.edteam.reservations.model.Reservation;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
-
-public interface ReservationRepository extends MongoRepository<Reservation, String> {
+public interface ReservationRepository extends ReactiveCrudRepository<Reservation, String> {
 
 }

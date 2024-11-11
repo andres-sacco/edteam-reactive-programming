@@ -64,6 +64,6 @@ public class Reservation extends Base {
 
     @Override
     public String toString() {
-        return "Reservation{" + "id=" + getId() + ", creationDate=" + creationDate  + '}';
+        return "Reservation{" + "id=" + getId() + ", creationDate=" + creationDate + '}';
     }
 }
