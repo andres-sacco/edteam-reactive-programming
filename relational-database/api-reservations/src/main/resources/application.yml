@@ -41,6 +41,10 @@ http-connector:
           connectionTimeout: 2000
 
 spring:
+  r2dbc:
+    url: r2dbc:mysql://localhost:3312/flights_reservation
+    username: root
+    password: muppet
   datasource:
     url: jdbc:mysql://localhost:3312/flights_reservation
     username: root

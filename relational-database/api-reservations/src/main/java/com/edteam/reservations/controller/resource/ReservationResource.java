@@ -74,8 +74,7 @@ public interface ReservationResource {
                             + "        \"arrival\": \"2025-01-01\",\n" + "        \"carrier\": \"AA\"\n" + "      }\n"
                             + "    ],\n" + "    \"price\": {\n" + "      \"totalPrice\": 1,\n"
                             + "      \"totalTax\": 0,\n" + "      \"basePrice\": 1\n" + "    }\n" + "  }\n" + "}"))))
-    Mono<ReservationDTO> update(@Min(1) @PathVariable Long id,
-            @RequestBody @Valid ReservationDTO reservation);
+    Mono<ReservationDTO> update(@Min(1) @PathVariable Long id, @RequestBody @Valid ReservationDTO reservation);
 
     @Operation(description = "Delete one reservation", responses = {
             @ApiResponse(responseCode = "200", description = "Return nothing", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Void.class))),
