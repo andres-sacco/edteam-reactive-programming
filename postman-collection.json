@@ -896,7 +896,7 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8080/api"
+			"value": "http://localhost:8080/api/flights/reservations"
 		}
 	]
 }
