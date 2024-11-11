@@ -18,11 +18,16 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ReservationService {
@@ -43,21 +48,29 @@ public class ReservationService {
         this.catalogConnector = catalogConnector;
     }
 
-    public List<ReservationDTO> getReservations(SearchReservationCriteriaDTO criteria) {
+    public Flux<ReservationDTO> getReservations(SearchReservationCriteriaDTO criteria) {
         Pageable pageable = PageRequest.of(criteria.getPageActual(), criteria.getPageSize());
-        return conversionService.convert(repository.findAll(ReservationSpecification.withSearchCriteria(criteria), pageable), List.class);
+
+        List<Reservation> reservations = repository.findAll(ReservationSpecification.withSearchCriteria(criteria), pageable);
+
+        return Flux.fromIterable(reservations)
+                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class))
+                //.zipWith(Flux.interval(Duration.ofSeconds(1)), (reservation, interval) -> reservation);
+                .concatMap(reservation -> Mono.just(conversionService.convert(reservation, ReservationDTO.class))
+                        .delayElement(Duration.ofMillis(1500)));  // Retardo de 1500 ms por cada elemento
+        //.delayElements(Duration.ofSeconds(2));
     }
 
-    public ReservationDTO getReservationById(Long id) {
+    public Mono<ReservationDTO> getReservationById(Long id) {
         Optional<Reservation> result = repository.findById(id);
         if (result.isEmpty()) {
             LOGGER.debug("Not exist reservation with the id {}", id);
             throw new EdteamException(APIError.RESERVATION_NOT_FOUND);
         }
-        return conversionService.convert(result.get(), ReservationDTO.class);
+        return Mono.justOrEmpty(conversionService.convert(result.get(), ReservationDTO.class));
     }
 
-    public ReservationDTO save(ReservationDTO reservation) {
+    public Mono<ReservationDTO> save(ReservationDTO reservation) {
         if (Objects.nonNull(reservation.getId())) {
             throw new EdteamException(APIError.RESERVATION_WITH_SAME_ID);
         }
@@ -67,10 +80,10 @@ public class ReservationService {
         validateEntity(transformed);
 
         Reservation result = repository.save(Objects.requireNonNull(transformed));
-        return conversionService.convert(result, ReservationDTO.class);
+        return Mono.justOrEmpty(conversionService.convert(result, ReservationDTO.class));
     }
 
-    public ReservationDTO update(Long id, ReservationDTO reservation) {
+    public Mono<ReservationDTO> update(Long id, ReservationDTO reservation) {
         if (!repository.existsById(id)) {
             LOGGER.debug("Not exist reservation with the id {}", id);
             throw new EdteamException(APIError.RESERVATION_NOT_FOUND);
@@ -80,18 +93,20 @@ public class ReservationService {
         Reservation transformed = conversionService.convert(reservation, Reservation.class);
         validateEntity(transformed);
         Reservation result = repository.save(Objects.requireNonNull(transformed));
-        return conversionService.convert(result, ReservationDTO.class);
+
+        return Mono.justOrEmpty(conversionService.convert(result, ReservationDTO.class));
     }
 
-    public void delete(Long id) {
+    public Mono<Void> delete(Long id) {
         if (!repository.existsById(id)) {
             LOGGER.debug("Not exist reservation with the id {}", id);
             throw new EdteamException(APIError.RESERVATION_NOT_FOUND);
         }
 
         repository.deleteById(id);
-    }
 
+        return Mono.empty();
+    }
     private void checkCity(ReservationDTO reservationDTO) {
         for (SegmentDTO segmentDTO : reservationDTO.getItinerary().getSegment()) {
             CityDTO origin = catalogConnector.getCity(segmentDTO.getOrigin());

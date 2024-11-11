@@ -7,12 +7,11 @@ import com.edteam.reservations.service.ReservationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/reservation")
@@ -28,39 +27,34 @@ public class ReservationController implements ReservationResource {
     }
 
     @GetMapping
-    public ResponseEntity<List<ReservationDTO>> getReservations(SearchReservationCriteriaDTO criteria) {
+    public Flux<ReservationDTO> getReservations(SearchReservationCriteriaDTO criteria) {
         LOGGER.info("Obtain all the reservations");
-        List<ReservationDTO> response = service.getReservations(criteria);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return service.getReservations(criteria);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReservationDTO> getReservationById(@PathVariable Long id) {
+    public Mono<ReservationDTO> getReservationById(@PathVariable Long id) {
         LOGGER.info("Obtain information from a reservation with {}", id);
-        ReservationDTO response = service.getReservationById(id);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return service.getReservationById(id);
     }
 
     @PostMapping
-    public ResponseEntity<ReservationDTO> save(@RequestBody ReservationDTO reservation) {
+    public Mono<ReservationDTO> save(@RequestBody ReservationDTO reservation) {
         LOGGER.info("Saving new reservation");
-        ReservationDTO response = service.save(reservation);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return service.save(reservation);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReservationDTO> update(@PathVariable Long id, @RequestBody ReservationDTO reservation) {
+    public Mono<ReservationDTO> update(@PathVariable Long id, @RequestBody ReservationDTO reservation) {
         LOGGER.info("Updating a reservation with {}", id);
-        ReservationDTO response = service.update(id, reservation);
+        return service.update(id, reservation);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public Mono<Void> delete(@PathVariable Long id) {
         LOGGER.info("Deleting a reservation with {}", id);
-        service.delete(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return service.delete(id);
     }
 
 }
