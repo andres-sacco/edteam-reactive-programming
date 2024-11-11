@@ -10,19 +10,15 @@ import com.edteam.reservations.dto.ReservationDTO;
 import com.edteam.reservations.model.Reservation;
 import com.edteam.reservations.repository.PassengerRepository;
 import com.edteam.reservations.repository.ReservationRepository;
-import com.edteam.reservations.specification.ReservationSpecification;
 import jakarta.validation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.Objects;
 import java.util.Set;
 
@@ -33,7 +29,6 @@ public class ReservationService {
 
     private PassengerRepository passengerRepository;
 
-
     private ReservationRepository repository;
 
     private ConversionService conversionService;
@@ -41,10 +36,8 @@ public class ReservationService {
     private CatalogConnector catalogConnector;
 
     @Autowired
-    public ReservationService(ReservationRepository repository,
-                              PassengerRepository passengerRepository,
-                              ConversionService conversionService,
-            CatalogConnector catalogConnector) {
+    public ReservationService(ReservationRepository repository, PassengerRepository passengerRepository,
+            ConversionService conversionService, CatalogConnector catalogConnector) {
         this.passengerRepository = passengerRepository;
         this.repository = repository;
         this.conversionService = conversionService;
@@ -54,29 +47,23 @@ public class ReservationService {
     public Flux<ReservationDTO> getReservations(SearchReservationCriteriaDTO criteria) {
         Flux<Reservation> reservations = repository.findAll();
 
-        return reservations
-                .flatMap(reservation -> passengerRepository.findAllByReservationId(reservation.getId())
-                        .collectList()
-                        .map(passengers -> {
-                            reservation.setPassengers(passengers);
-                            return reservation;
-                        }))
-                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class));
-                // .zipWith(Flux.interval(Duration.ofSeconds(1)), (reservation, interval) -> reservation);
-                //.concatMap(reservation -> Mono.just(conversionService.convert(reservation, ReservationDTO.class))
-               //         .delayElement(Duration.ofMillis(1500))); // Retardo de 1500 ms por cada elemento
+        return reservations.flatMap(reservation -> passengerRepository.findAllByReservationId(reservation.getId())
+                .collectList().map(passengers -> {
+                    reservation.setPassengers(passengers);
+                    return reservation;
+                })).mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class));
+        // .zipWith(Flux.interval(Duration.ofSeconds(1)), (reservation, interval) -> reservation);
+        // .concatMap(reservation -> Mono.just(conversionService.convert(reservation, ReservationDTO.class))
+        // .delayElement(Duration.ofMillis(1500))); // Retardo de 1500 ms por cada elemento
         // .delayElements(Duration.ofSeconds(2));
     }
 
     public Mono<ReservationDTO> getReservationById(Long id) {
-        return repository.findById(id)
-                .flatMap(reservation -> passengerRepository.findAllByReservationId(reservation.getId())
-                        .collectList()
-                        .map(passengers -> {
-                            reservation.setPassengers(passengers);
-                            return reservation;
-                        }))
-                .switchIfEmpty(Mono.error(new EdteamException(APIError.RESERVATION_NOT_FOUND)))
+        return repository.findById(id).flatMap(reservation -> passengerRepository
+                .findAllByReservationId(reservation.getId()).collectList().map(passengers -> {
+                    reservation.setPassengers(passengers);
+                    return reservation;
+                })).switchIfEmpty(Mono.error(new EdteamException(APIError.RESERVATION_NOT_FOUND)))
                 .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class));
     }
 
@@ -90,8 +77,7 @@ public class ReservationService {
         validateEntity(transformed);
 
         Mono<Reservation> result = repository.save(Objects.requireNonNull(transformed));
-        return result
-                .mapNotNull(r -> conversionService.convert(r, ReservationDTO.class));
+        return result.mapNotNull(r -> conversionService.convert(r, ReservationDTO.class));
     }
 
     public Mono<ReservationDTO> update(Long id, ReservationDTO reservation) {
@@ -105,8 +91,7 @@ public class ReservationService {
         validateEntity(transformed);
         Mono<Reservation> result = repository.save(Objects.requireNonNull(transformed));
 
-        return result
-                .mapNotNull(r -> conversionService.convert(r, ReservationDTO.class));
+        return result.mapNotNull(r -> conversionService.convert(r, ReservationDTO.class));
     }
 
     public Mono<Void> delete(Long id) {
