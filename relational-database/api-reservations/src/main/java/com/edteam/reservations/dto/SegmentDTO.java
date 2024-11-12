@@ -12,6 +12,16 @@ public class SegmentDTO {
 
     private String carrier;
 
+    public SegmentDTO(){}
+
+    public SegmentDTO(String origin, String destination, String departure, String arrival, String carrier) {
+        this.origin = origin;
+        this.destination = destination;
+        this.departure = departure;
+        this.arrival = arrival;
+        this.carrier = carrier;
+    }
+
     public String getOrigin() {
         return origin;
     }

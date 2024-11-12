@@ -66,7 +66,7 @@ public class CatalogConnector {
                 .onErrorMap(RuntimeException.class, ex -> new EdteamException(APIError.BAD_FORMAT))
                 .doOnError(error -> {
                     // Registro de cualquier error en el flujo
-                    LOGGER.error("Error al realizar la solicitud: {}", error.getMessage());
+                        LOGGER.error("Error al realizar la solicitud: {}", error.getMessage());
                 })
                 .onErrorResume(error -> {
                     LOGGER.error("Error en la solicitud, obteniendo la informacion de otro lugar.");

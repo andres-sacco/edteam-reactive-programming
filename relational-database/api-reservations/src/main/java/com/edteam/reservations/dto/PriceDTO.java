@@ -10,6 +10,14 @@ public class PriceDTO {
 
     private BigDecimal basePrice;
 
+    public PriceDTO() {}
+
+    public PriceDTO(BigDecimal totalPrice, BigDecimal totalTax, BigDecimal basePrice) {
+        this.totalPrice = totalPrice;
+        this.totalTax = totalTax;
+        this.basePrice = basePrice;
+    }
+
     public BigDecimal getTotalPrice() {
         return totalPrice;
     }

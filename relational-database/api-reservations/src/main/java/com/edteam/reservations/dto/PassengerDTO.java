@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public class PassengerDTO {
 
     private String firstName;
+
     private String lastName;
 
     private String documentNumber;
@@ -12,6 +13,16 @@ public class PassengerDTO {
     private String documentType;
 
     private LocalDate birthday;
+
+    public PassengerDTO() {}
+
+    public PassengerDTO(String firstName, String lastName, String documentNumber, String documentType, LocalDate birthday) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.documentNumber = documentNumber;
+        this.documentType = documentType;
+        this.birthday = birthday;
+    }
 
     public String getFirstName() {
         return firstName;

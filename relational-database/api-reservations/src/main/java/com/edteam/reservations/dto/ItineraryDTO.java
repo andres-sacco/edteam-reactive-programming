@@ -12,6 +12,15 @@ public class ItineraryDTO {
 
     private PriceDTO price;
 
+    public ItineraryDTO() {}
+
+    public ItineraryDTO(Long id, Long version, List<SegmentDTO> segment, PriceDTO price) {
+        this.id = id;
+        this.version = version;
+        this.segment = segment;
+        this.price = price;
+    }
+
     public List<SegmentDTO> getSegment() {
         return segment;
     }

@@ -15,6 +15,17 @@ public class ReservationDTO {
 
     private LocalDate creationDate;
 
+    public ReservationDTO() {}
+
+
+    public ReservationDTO(Long id, Long version, List<PassengerDTO> passengers, ItineraryDTO itinerary, LocalDate creationDate) {
+        this.id = id;
+        this.version = version;
+        this.passengers = passengers;
+        this.itinerary = itinerary;
+        this.creationDate = creationDate;
+    }
+
     public List<PassengerDTO> getPassengers() {
         return passengers;
     }
