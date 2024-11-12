@@ -20,8 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    private String secret =
-            "qwertyuiopasdfghjklzxcvbnm123456891012132edteamprobandogeneraciondecontrase"; // The
+    private String secret = "qwertyuiopasdfghjklzxcvbnm123456891012132edteamprobandogeneraciondecontrase"; // The
 
     // secret
     // key
@@ -30,8 +29,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     // generating application.
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         final String authorizationHeader = request.getHeader("Authorization");
 
@@ -43,37 +41,31 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 // Parse and validate the token
-                Claims claims =
-                        Jwts.parser()
-                                .setSigningKey(
-                                        Base64.getEncoder().encodeToString(secret.getBytes()))
-                                .parseClaimsJws(jwt)
-                                .getBody();
+                Claims claims = Jwts.parser().setSigningKey(Base64.getEncoder().encodeToString(secret.getBytes()))
+                        .parseClaimsJws(jwt).getBody();
 
                 // If valid, continue processing
                 // Extract username and roles from the token
                 String username = claims.getSubject(); // Typically, the subject is the username
 
                 // Convert roles to GrantedAuthority
-                SimpleGrantedAuthority authority =
-                        new SimpleGrantedAuthority((String) claims.get("email"));
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority((String) claims.get("email"));
                 List<SimpleGrantedAuthority> authorities = List.of(authority);
 
                 // Create UserDetails
                 UserDetails userDetails = new CustomUserDetailsDTO(username, authorities);
 
                 // Create AuthenticationToken
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails, jwt, userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, jwt, userDetails.getAuthorities());
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 // Set the authentication in the SecurityContext
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (JwtException e) {
                 // Handle invalid JWT token
+                System.out.println(authorizationHeader);
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
                 return;
             }

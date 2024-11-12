@@ -9,8 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class CustomUserDetailsDTO implements UserDetails {
 
     private String username;
-    private String
-            password; // Typically you wouldn't need the password if JWT is used for authentication
+    private String password; // Typically you wouldn't need the password if JWT is used for authentication
     private List<SimpleGrantedAuthority> authorities;
 
     public CustomUserDetailsDTO(String username, List<SimpleGrantedAuthority> authorities) {

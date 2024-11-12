@@ -49,7 +49,8 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
-
+  main:
+    web-application-type: reactive
   flyway:
     locations: classpath:db
     sql-migration-prefix: V
