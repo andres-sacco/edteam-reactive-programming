@@ -4,6 +4,8 @@ import com.edteam.reservations.connector.configuration.EndpointConfiguration;
 import com.edteam.reservations.connector.configuration.HostConfiguration;
 import com.edteam.reservations.connector.configuration.HttpConnectorConfiguration;
 import com.edteam.reservations.connector.response.CityDTO;
+import com.edteam.reservations.enums.APIError;
+import com.edteam.reservations.exception.EdteamException;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -12,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
@@ -58,6 +61,17 @@ public class CatalogConnector {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 
-        return client.get().uri(urlEncoder -> urlEncoder.build(code)).retrieve().bodyToMono(CityDTO.class);
+        return client.get().uri(urlEncoder -> urlEncoder.build(code)).retrieve()
+                .bodyToMono(CityDTO.class)
+                .onErrorMap(RuntimeException.class, ex -> new EdteamException(APIError.BAD_FORMAT))
+                .doOnError(error -> {
+                    // Registro de cualquier error en el flujo
+                    LOGGER.error("Error al realizar la solicitud: {}", error.getMessage());
+                })
+                .onErrorResume(error -> {
+                    LOGGER.error("Error en la solicitud, obteniendo la informacion de otro lugar.");
+                    return client.get().uri(urlEncoder -> urlEncoder.build(code)).retrieve().bodyToMono(CityDTO.class);
+                })
+                .onErrorReturn(new CityDTO("Default City", "N/A", "N/A"));
     }
 }
