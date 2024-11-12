@@ -7,7 +7,8 @@ public enum APIError {
     BAD_FORMAT(HttpStatus.BAD_REQUEST, "The message not have a correct form"),
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Reservation not found"),
     RESERVATION_WITH_SAME_ID(HttpStatus.BAD_REQUEST, "There is a reservation with the same id"),
-    EXCEED_NUMBER_OPERATIONS(HttpStatus.TOO_MANY_REQUESTS, "You exceed the number of operations"),;
+    EXCEED_NUMBER_OPERATIONS(HttpStatus.TOO_MANY_REQUESTS, "You exceed the number of operations"),
+    TIMEOUT_EXCEEDED(HttpStatus.REQUEST_TIMEOUT, "The connection with other apis has problems");
 
     private final HttpStatus httpStatus;
     private final String message;

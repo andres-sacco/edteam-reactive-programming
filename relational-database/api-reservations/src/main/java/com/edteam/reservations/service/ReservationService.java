@@ -71,6 +71,8 @@ public class ReservationService {
                 })
                 // Condicional: establecer un valor por defecto en caso de no tener resultado
                 .defaultIfEmpty(new ReservationDTO());
+                // Primer repeat: repite cada 5 minutos, útil para solicitudes recurrentes
+                //.repeatWhen(flux -> flux.delayElements(Duration.ofSeconds(1)));
     }
 
     public Mono<ReservationDTO> getReservationById(Long id) {
