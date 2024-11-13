@@ -57,13 +57,9 @@ public class CatalogConnector {
                                 new ReadTimeoutHandler(endpointConfiguration.getReadTimeout(), TimeUnit.MILLISECONDS))
                         .addHandler(new WriteTimeoutHandler(endpointConfiguration.getWriteTimeout(),
                                 TimeUnit.MILLISECONDS)))
-                //.protocol(HttpProtocol.H2) // Forzar HTTP2 solo cuando el cliente usa tambien http2
-                .compress(true)
-                .http2Settings(settings -> settings
-                        .maxConcurrentStreams(200)
-                        .initialWindowSize(131072)
-                        .maxFrameSize(32768)
-                );
+                // .protocol(HttpProtocol.H2) // Forzar HTTP2 solo cuando el cliente usa tambien http2
+                .compress(true).http2Settings(
+                        settings -> settings.maxConcurrentStreams(200).initialWindowSize(131072).maxFrameSize(32768));
 
         WebClient client = WebClient.builder()
                 .baseUrl("http://" + hostConfiguration.getHost() + ":" + hostConfiguration.getPort()
@@ -72,10 +68,7 @@ public class CatalogConnector {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 
-        return client.get()
-                .uri(urlEncoder -> urlEncoder.build(code))
-                .retrieve()
-                .bodyToMono(CityDTO.class)
+        return client.get().uri(urlEncoder -> urlEncoder.build(code)).retrieve().bodyToMono(CityDTO.class)
 
                 // Mapear un error específico a una excepción personalizada
                 .onErrorMap(RuntimeException.class, ex -> new EdteamException(APIError.BAD_FORMAT))
@@ -84,26 +77,35 @@ public class CatalogConnector {
                 .retry(3)
 
                 // Segundo tipo de retry: usa un backoff con incremento exponencial para evitar sobrecarga
-                .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
-                        .maxBackoff(Duration.ofSeconds(5)) // Límite máximo de espera entre reintentos
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(2)).maxBackoff(Duration.ofSeconds(5)) // Límite máximo de
+                                                                                                     // espera entre
+                                                                                                     // reintentos
                         .filter(ex -> ex instanceof TimeoutException) // Reintento solo si es un TimeoutException
-                        .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
-                                new EdteamException(APIError.TIMEOUT_EXCEEDED))) // Lanza una excepción específica si se agotan los intentos
+                        .onRetryExhaustedThrow(
+                                (retryBackoffSpec, retrySignal) -> new EdteamException(APIError.TIMEOUT_EXCEEDED))) // Lanza
+                                                                                                                    // una
+                                                                                                                    // excepción
+                                                                                                                    // específica
+                                                                                                                    // si
+                                                                                                                    // se
+                                                                                                                    // agotan
+                                                                                                                    // los
+                                                                                                                    // intentos
 
                 // Tercer tipo de retry: reintentos condicionales según la respuesta de error
-                .retryWhen(Retry.fixedDelay(2, Duration.ofSeconds(2))
-                        .filter(ex -> ex instanceof EdteamException)) // Solo reintenta si es EdteamException
+                .retryWhen(Retry.fixedDelay(2, Duration.ofSeconds(2)).filter(ex -> ex instanceof EdteamException)) // Solo
+                                                                                                                   // reintenta
+                                                                                                                   // si
+                                                                                                                   // es
+                                                                                                                   // EdteamException
 
                 // Manejador de errores: registra cualquier error en el flujo
-                .doOnError(error ->
-                        LOGGER.error("Error al realizar la solicitud: {}", error.getMessage()))
+                .doOnError(error -> LOGGER.error("Error al realizar la solicitud: {}", error.getMessage()))
 
                 // Redirige a una fuente alternativa en caso de error
                 .onErrorResume(error -> {
                     LOGGER.error("Error en la solicitud, obteniendo la información de otro lugar.");
-                    return client.get().uri(urlEncoder -> urlEncoder.build(code))
-                            .retrieve()
-                            .bodyToMono(CityDTO.class);
+                    return client.get().uri(urlEncoder -> urlEncoder.build(code)).retrieve().bodyToMono(CityDTO.class);
                 })
 
                 // Retorna un valor predeterminado si todos los reintentos fallan

@@ -5,7 +5,8 @@ public class CityDTO {
     private String code;
     private String timeZone;
 
-    public CityDTO() {}
+    public CityDTO() {
+    }
 
     public CityDTO(String name, String code, String timeZone) {
         this.name = name;
