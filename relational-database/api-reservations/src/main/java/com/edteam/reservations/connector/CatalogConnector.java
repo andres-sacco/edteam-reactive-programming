@@ -102,9 +102,6 @@ public class CatalogConnector {
                 })
 
                 // Retorna un valor predeterminado si todos los reintentos fallan
-                .onErrorReturn(new CityDTO("Default City", "N/A", "N/A"))
-
-                // Retorna un valor predeterminado si todos los reintentos fallan
                 .onErrorReturn(new CityDTO("Default City", "N/A", "N/A"));
     }
 }
