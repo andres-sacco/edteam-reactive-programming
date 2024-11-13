@@ -59,7 +59,7 @@ public class ReservationService {
                 .map(reservation -> conversionService.convert(reservation, ReservationDTO.class))
 
                 // Validación: asegura que el resultado no sea nulo y tenga campos obligatorios
-                .filter(dto -> dto != null && (dto.getId() != null || dto.getItinerary() != null))
+                .filter(dto -> dto != null && dto.getId() != null && dto.getItinerary() != null)
 
                 // Combinación: concatenar con otro flujo (ej., reservas con descuentos especiales)
                 .concatWith(getDiscountedReservations(criteria))
