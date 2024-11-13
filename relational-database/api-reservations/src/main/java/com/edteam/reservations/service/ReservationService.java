@@ -76,7 +76,7 @@ public class ReservationService {
                 // Primer repeat: repite cada 5 minutos, útil para solicitudes recurrentes
                 //.repeatWhen(flux -> flux.delayElements(Duration.ofSeconds(1)));
 
-                // Ejecuta en un scheduler que permite operaciones bloqueantes
+                // Ejecuta en un scheduler que permite operaciones bloqueantes, sino se puede usar parallel()
                 .publishOn(Schedulers.boundedElastic())
 
                 // Limita la cantidad de elementos procesados a la vez

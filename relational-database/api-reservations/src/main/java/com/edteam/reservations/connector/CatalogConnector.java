@@ -58,7 +58,12 @@ public class CatalogConnector {
                         .addHandler(new WriteTimeoutHandler(endpointConfiguration.getWriteTimeout(),
                                 TimeUnit.MILLISECONDS)))
                 //.protocol(HttpProtocol.H2) // Forzar HTTP2 solo cuando el cliente usa tambien http2
-                .compress(true);
+                .compress(true)
+                .http2Settings(settings -> settings
+                        .maxConcurrentStreams(200)
+                        .initialWindowSize(131072)
+                        .maxFrameSize(32768)
+                );
 
         WebClient client = WebClient.builder()
                 .baseUrl("http://" + hostConfiguration.getHost() + ":" + hostConfiguration.getPort()
