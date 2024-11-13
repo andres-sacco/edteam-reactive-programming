@@ -21,6 +21,8 @@ server:
 
   servlet:
     context-path: /api/flights/reservations
+  http2:
+    enabled: true
 
 info:
   application:

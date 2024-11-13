@@ -21,6 +21,7 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.HttpProtocol;
 import reactor.netty.http.client.HttpClient;
 import reactor.util.retry.Retry;
 
@@ -55,7 +56,9 @@ public class CatalogConnector {
                         .addHandler(
                                 new ReadTimeoutHandler(endpointConfiguration.getReadTimeout(), TimeUnit.MILLISECONDS))
                         .addHandler(new WriteTimeoutHandler(endpointConfiguration.getWriteTimeout(),
-                                TimeUnit.MILLISECONDS)));
+                                TimeUnit.MILLISECONDS)))
+                //.protocol(HttpProtocol.H2) // Forzar HTTP2 solo cuando el cliente usa tambien http2
+                .compress(true);
 
         WebClient client = WebClient.builder()
                 .baseUrl("http://" + hostConfiguration.getHost() + ":" + hostConfiguration.getPort()
