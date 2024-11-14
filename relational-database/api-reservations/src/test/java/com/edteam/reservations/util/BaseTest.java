@@ -1,7 +1,5 @@
 package com.edteam.reservations.util;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -24,10 +22,4 @@ public abstract class BaseTest {
 
         dockerComposeContainer.start();
     }
-
-    /*
-     * @BeforeAll static void setUp() { dockerComposeContainer.start(); }
-     *
-     * @AfterAll static void tearDown() { dockerComposeContainer.stop(); }
-     */
 }

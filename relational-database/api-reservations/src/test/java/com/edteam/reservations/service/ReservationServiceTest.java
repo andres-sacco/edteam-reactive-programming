@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-public class ReservationServiceTest extends BaseTest {
+class ReservationServiceTest extends BaseTest {
 
     @Autowired
     private ReservationService service;
@@ -38,16 +38,11 @@ public class ReservationServiceTest extends BaseTest {
 
     @Test
     void getReservation_should_return_a_reservation() {
-        // Define search criteria
-        SearchReservationCriteriaDTO criteria = new SearchReservationCriteriaDTO();
-        criteria.setPageActual(0);
-        criteria.setPageSize(10);
-
         // Execute method
         Mono<ReservationDTO> result = service.getReservationById(2L);
 
-        // Verify the result
-        StepVerifier.create(result).expectNextMatches(reservation -> reservation.equals(getReservation()))
+            // Verify the result
+            StepVerifier.create(result).expectNextMatches(reservation -> reservation.equals(getReservation()))
                 .expectComplete().verify();
     }
 
