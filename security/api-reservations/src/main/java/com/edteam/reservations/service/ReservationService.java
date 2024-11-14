@@ -53,11 +53,7 @@ public class ReservationService {
                 pageable);
 
         return Flux.fromIterable(reservations)
-                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class))
-                // .zipWith(Flux.interval(Duration.ofSeconds(1)), (reservation, interval) -> reservation);
-                .concatMap(reservation -> Mono.just(conversionService.convert(reservation, ReservationDTO.class))
-                        .delayElement(Duration.ofMillis(1500))); // Retardo de 1500 ms por cada elemento
-        // .delayElements(Duration.ofSeconds(2));
+                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class));
     }
 
     public Mono<ReservationDTO> getReservationById(Long id) {
