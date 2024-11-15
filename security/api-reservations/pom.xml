@@ -22,7 +22,6 @@
         <jjwt.version>0.11.5</jjwt.version>
 
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-
         <formatter-maven-plugin.version>2.23.0</formatter-maven-plugin.version>
     </properties>
     <dependencies>
@@ -92,6 +91,11 @@
         </dependency>
 
         <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
@@ -115,7 +119,6 @@
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
-
     </dependencies>
 
     <build>

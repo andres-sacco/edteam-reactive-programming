@@ -1,46 +1,37 @@
 package com.edteam.reservations.configuration;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.stereotype.Component;
 
 @Component
-@EnableWebSecurity
+@EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
 public class SecurityConfiguration {
 
-    @Autowired private JwtRequestFilter jwtRequestFilter;
-
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers("/documentation/**")
-                                        .permitAll() // Public endpoints
-                                        .requestMatchers("/swagger-ui.html")
-                                        .permitAll() // Public endpoints
-                                        .requestMatchers("/swagger-ui/**")
-                                        .permitAll() // Public endpoints
-                                        .requestMatchers("/v3/api-docs/**")
-                                        .permitAll() // Public endpoints
-                                        .requestMatchers("/model/**")
-                                        .permitAll() // Public endpoints
-                                        .anyRequest()
-                                        .authenticated() // Protected endpoints
-                )
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http, JwtTokenProvider tokenProvider,
+            ReactiveAuthenticationManager reactiveAuthenticationManager) {
+
+        return http.csrf(ServerHttpSecurity.CsrfSpec::disable).authenticationManager(reactiveAuthenticationManager)
+                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+                .authorizeExchange(auth -> auth.pathMatchers("/documentation/**").permitAll() // Public endpoints
+                        .pathMatchers("/swagger-ui.html").permitAll() // Public endpoints
+                        .pathMatchers("/swagger-ui/**").permitAll() // Public endpoints
+                        .pathMatchers("/v3/api-docs/**").permitAll() // Public endpoints
+                        .anyExchange().authenticated() // Protected endpoints
+                ).addFilterAt(new JwtTokenAuthenticationFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC)
                 .build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public ReactiveAuthenticationManager reactiveAuthenticationManager() {
+        return new ReactiveAuthenticationManagerAdapter();
     }
 }
