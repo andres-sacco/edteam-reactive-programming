@@ -9,17 +9,24 @@ import com.edteam.reservations.exception.EdteamException;
 import com.edteam.reservations.dto.ReservationDTO;
 import com.edteam.reservations.model.Reservation;
 import com.edteam.reservations.repository.ReservationRepository;
+import com.edteam.reservations.repository.query.ReservationQuery;
 import jakarta.validation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ReservationService {
@@ -34,22 +41,32 @@ public class ReservationService {
 
     @Autowired
     public ReservationService(ReservationRepository repository, ConversionService conversionService,
-            CatalogConnector catalogConnector) {
+                              CatalogConnector catalogConnector) {
         this.repository = repository;
         this.conversionService = conversionService;
         this.catalogConnector = catalogConnector;
     }
 
     public Flux<ReservationDTO> getReservations(SearchReservationCriteriaDTO criteria) {
-        return repository.findAll()
-                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class));
+        Pageable pageable = PageRequest.of(criteria.getPageActual(), criteria.getPageSize());
+
+        List<Reservation> reservations = repository.findAll(ReservationQuery.exampleWithSearchCriteria(criteria), pageable).toList();
+
+        return Flux.fromIterable(reservations)
+                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class))
+                //.zipWith(Flux.interval(Duration.ofSeconds(1)), (reservation, interval) -> reservation);
+                .concatMap(reservation -> Mono.just(conversionService.convert(reservation, ReservationDTO.class))
+                        .delayElement(Duration.ofMillis(1500)));  // Retardo de 1500 ms por cada elemento
+                //.delayElements(Duration.ofSeconds(2));
     }
 
     public Mono<ReservationDTO> getReservationById(String id) {
-        return repository.findById(id).switchIfEmpty(Mono.defer(() -> {
-            LOGGER.debug("No reservation found with the id {}", id);
-            return Mono.error(new EdteamException(APIError.RESERVATION_NOT_FOUND));
-        })).mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class));
+        Optional<Reservation> result = repository.findById(id);
+        if (result.isEmpty()) {
+            LOGGER.debug("Not exist reservation with the id {}", id);
+            throw new EdteamException(APIError.RESERVATION_NOT_FOUND);
+        }
+        return Mono.justOrEmpty(conversionService.convert(result.get(), ReservationDTO.class));
     }
 
     public Mono<ReservationDTO> save(ReservationDTO reservation) {
@@ -61,34 +78,33 @@ public class ReservationService {
         Reservation transformed = conversionService.convert(reservation, Reservation.class);
         validateEntity(transformed);
 
-        return repository.save(Objects.requireNonNull(transformed))
-                .mapNotNull(result -> conversionService.convert(result, ReservationDTO.class));
+        Reservation result = repository.save(Objects.requireNonNull(transformed));
+        return Mono.justOrEmpty(conversionService.convert(result, ReservationDTO.class));
     }
 
     public Mono<ReservationDTO> update(String id, ReservationDTO reservation) {
-        return repository.existsById(id).flatMap(exists -> {
-            if (!exists) {
-                LOGGER.debug("No reservation found with the id {}", id);
-                return Mono.error(new EdteamException(APIError.RESERVATION_NOT_FOUND));
-            }
-            checkCity(reservation);
+        if (!repository.existsById(id)) {
+            LOGGER.debug("Not exist reservation with the id {}", id);
+            throw new EdteamException(APIError.RESERVATION_NOT_FOUND);
+        }
+        checkCity(reservation);
 
-            Reservation transformed = conversionService.convert(reservation, Reservation.class);
-            validateEntity(transformed);
+        Reservation transformed = conversionService.convert(reservation, Reservation.class);
+        validateEntity(transformed);
+        Reservation result = repository.save(Objects.requireNonNull(transformed));
 
-            return repository.save(Objects.requireNonNull(transformed))
-                    .mapNotNull(result -> conversionService.convert(result, ReservationDTO.class));
-        });
+        return Mono.justOrEmpty(conversionService.convert(result, ReservationDTO.class));
     }
 
     public Mono<Void> delete(String id) {
-        return repository.existsById(id).flatMap(exists -> {
-            if (!exists) {
-                LOGGER.debug("No reservation found with the id {}", id);
-                return Mono.error(new EdteamException(APIError.RESERVATION_NOT_FOUND));
-            }
-            return repository.deleteById(id);
-        });
+        if (!repository.existsById(id)) {
+            LOGGER.debug("Not exist reservation with the id {}", id);
+            throw new EdteamException(APIError.RESERVATION_NOT_FOUND);
+        }
+
+        repository.deleteById(id);
+
+        return Mono.empty();
     }
 
     private void checkCity(ReservationDTO reservationDTO) {

@@ -4,6 +4,7 @@ import com.edteam.reservations.dto.ReservationTransactionDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component
 public class ReservationTransactionProducer {
@@ -17,7 +18,7 @@ public class ReservationTransactionProducer {
         this.kafkaPaymentTemplate = kafkaPaymentTemplate;
     }
 
-    public void sendMessage(ReservationTransactionDTO message) {
-        kafkaPaymentTemplate.send(TOPIC, message);
+    public Mono<Void> sendMessage(ReservationTransactionDTO message) {
+        return Mono.fromRunnable(() -> kafkaPaymentTemplate.send(TOPIC, message)).then();
     }
 }
