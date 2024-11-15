@@ -7,8 +7,16 @@ Este repositorio contiene todo lo necesario para poder seguir el curso desde el 
 Los siguientes son los temas más importantes de este archivo:
 - [Requerimientos](#Requerimientos)
 - [Comprobar requerimientos](#comprobar-requerimientos)
+- [Arquitectura](#Arquitectura)
+    - [Microservicios](#Microservicios)
+    - [Capas de la aplicacion](#Capas-de-la-aplicacion)
+- [Documentacion de los endpoints](#Documentacion-de-los-endpoints)
+- [Comandos basicos de Kafka](#Comandos-basicos-de-Kafka)
+- [Consideraciones](#Consideraciones)
+- [Preguntas frecuentes](#Preguntas-frecuentes)
 
-# Requerimientos
+
+## Requerimientos
 
 Para poder utilizar este proyecto es necesario tener en tu máquina lo siguiente:
 - [Java](https://www.oracle.com/ar/java/technologies/downloads/#java17l)
@@ -42,3 +50,190 @@ Si ha instalado en su máquina algunas de estas herramientas anteriormente o las
    % docker --version
    Docker version 18.09.0, build 369ce74a3c
    ````
+
+
+## Arquitectura
+
+Los microservicios son una abstracción de todo el flujo para crear reservas de una agencia que vende vuelos.
+
+#### Microservicios
+
+El sistema se compone de los siguientes microservicios:
+* **api-catalog** este microservicio contiene toda la informacion relacionada con un catalogo de ciudades.
+
+
+* **api-reservations** este microservicio contiene toda la informacion de las reservas de una empresa que vende pasajes aereos.
+
+### Capas de la aplicacion
+
+Todos los microservicios se dividen en diferentes capas que solo tienen acceso a otras capas. Veamos un poco sobre lo que contiene cada capa:
+
+| Capa          | Descripcion                                                                                                                             | Paquetes                                             |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| Controllers   | En esta capa encontraras toda la lógica para realizar las distintas acciones.                                                           | *.controller and *.controller.documentation          |
+| Services      | Contiene toda la definición de los servicios y la implementación.                                                                       | *.service and *.service.impl                         |
+| Validators    | Contiene toda la lógica para validar una Solicitud de un DTO.                                                                           | *.validator                                          |
+| Repositories  | Esta capa contiene la definición usando interfaces y en algunos casos contiene la especificación para realizar una consulta particular. | *.repository, *.repository.impl, and *.specification |
+| Connectors    | Dentro de esta capa se encuentran todas las configuraciones y los endpoints para comunicarse con servicios externos.                    | *.connector and *.connector.configuration            |
+| Helpers       | Todas las clases que ayudan en diferentes cosas en todos los microservicios (por ejemplo, calcular la duración de un vuelo).            | *.helper                                             |
+| Configuration | Toda la lógica para configurar diferentes aspectos de los microservicios (por ejemplo, formato de respuesta, puertos).                  | *.configuration                                      |
+| Exceptions    | Contiene todas las excepciones que cada microservicio puede generar durante la ejecución de una solicitud.                              | *.exception                                          |
+| Model         | Esta capa particular contiene todas las entidades que acceden a las bases de datos.                                                     | *.model                                              |
+| Enums/DTO     | En esta capa puede encontrar las clases y la enumeración que se utilizan en las diferentes capas.                                       | *.enums and *.dto                                    |
+
+
+## Documentacion de los endpoints
+
+Cada API tiene documentación para comprender qué parámetros son necesarios y la URL para invocarlos. Para ver la documentación de la API es necesario ejecutar cada proyecto y acceder a:
+- [Swagger - Reservation](http://localhost:8080/api/flights/reservations/documentation)
+- [Swagger - Catalog](http://localhost:6070/api/flights/catalog/documentation)
+
+Opcionalmente puedes usar [**Postman**](https://www.postman.com/) para realizar request desde los diferentes microservicios, el repositorio incluye un archivo con una coleccion con todos los endpoints.
+
+
+## Comandos basicos de Kafka
+Existen una serie de comandos que nos van a ser utiles a lo largo del curso.
+
+### Usando el cliente
+Tener en cuenta que estos son usando el cliente que nos descargamos de la pagina oficial de Kafka. Mas abajo estan los mismos comandos pero usando Docker.
+
+#### Crear topicos
+
+```shell script
+export TOPIC=payments
+```
+
+Sin replicacion
+
+```shell script
+bin/kafka-topics.sh --create --bootstrap-server localhost:9092 \
+  --topic $TOPIC --partitions 3 
+```
+
+Con replicacion
+
+```shell script
+bin/kafka-topics.sh --create --bootstrap-server localhost:9092 \
+  --topic $TOPIC --partitions 3 --replication-factor 3
+```
+
+#### Describir la estructura de un topico
+
+```shell script
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic $TOPIC
+```
+
+#### Kafka Productor Consola
+
+```shell script
+bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic $TOPIC
+```
+
+#### Kafka Consumidor Consola
+
+```shell script
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 \
+--topic $TOPIC --from-beginning
+```
+
+### Usando Docker
+Con estos comandos para ejecutar los mismos comandos pero utilizando Docker.
+
+
+#### Crear topicos
+
+Sin replicacion
+
+```shell script
+docker exec -t zookeeper kafka-topics --create --bootstrap-server broker1:29092 --replication-factor 3 --topic $TOPIC
+```
+
+Con replicacion
+
+```shell script
+docker exec -t zookeeper kafka-topics --create --bootstrap-server broker1:29092 --replication-factor 3 --partitions 3 --topic $TOPIC
+```
+
+#### Describir la estructura de un topico
+
+```shell script
+docker exec -t zookeeper kafka-topics --describe --topic $TOPIC --bootstrap-server broker1:29092
+```
+
+#### Kafka Productor Consola
+
+```shell script
+docker exec -t broker1 kafka-console-producer --topic $TOPIC --bootstrap-server localhost:9092 
+```
+
+#### Kafka Consumidor Consola
+
+```shell script
+docker exec -t broker1 kafka-console-consumer --topic $TOPIC --bootstrap-server localhost:9092 --from-beginning
+```
+
+### Schema Registry
+
+####  Setear la compatibilidad
+```shell script
+curl -X PUT -H "Content-Type: application/json" \
+--data '{"compatibility": "BACKWARD"}' \
+http://localhost:8081/config
+```
+
+####  Crear esquemas
+```shell script
+curl -X POST -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+--data '{"schema": "{\"type\":\"record\",\"name\":\"xxxxDTO\",\"namespace\":\"xxxxxx\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"}]}"}' \
+http://localhost:8081/subjects/${TOPIC_NAME}/versions/
+```
+
+####  Obtener informacion del esquema
+```shell script
+curl -X GET http://localhost:8081/subjects/${TOPIC_NAME}/versions/latest
+```
+
+####  Eliminar el esquema
+```shell script
+curl --location --request DELETE 'http://localhost:8081/subjects/${TOPIC_NAME}/versions/latest' \
+--header 'Content-Type: application/vnd.schemaregistry.v1+json'
+```
+
+####  Comprobar la compatibilidad
+```shell script
+curl -X POST -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+--data '{"schema": "{\"type\":\"record\",\"name\":\"PaymentDTO\",\"namespace\":\"com.edteam.reservations.dto\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"}]}"}' \
+http://localhost:8081/compatibility/subjects/payments/versions/latest
+```
+
+## Consideraciones
+
+Para ejecutar todos los microservicios en la misma máquina, debes considerar que los siguientes puertos deben estar disponibles para usarlo:
+
+| Name             | Application | Database    |
+|------------------|-------------| ----------- |
+| api-reservations | 8080        | 3312        |
+| api-catalog      | 6070        | 3310        |
+
+
+## Preguntas frecuentes
+
+**¿Qué versión del JDK puedo usar en este proyecto?**
+
+No hay restricción sobre qué versión en particular debes considerar, ya que existen diferentes alternativas al JDK:
+
+* **OracleJDK**: Esta versión era gratuita hasta Java 11, después de esta versión puedes usarla para entornos de desarrollo/prueba, pero debes pagar una licencia para usarla en producción. Esta versión del JDK le ofrece los parches de errores más recientes y nuevas funciones porque Oracle es el propietario del lenguaje.
+
+
+* **OpenJDK**: Cuando Oracle compró Sun Microsystems, creó esto como una alternativa de código abierto que todos los desarrolladores pueden usar en cualquier entorno sin restricciones. El principal problema de esta versión es que los parches de los errores tardan en aparecer en los casos que no son críticos.
+
+Tenga en cuenta que existen otras alternativas, pero según el [Informe Snyk 2021](https://res.cloudinary.com/snyk/image/upload/v1623860216/reports/jvm-ecosystem-report-2021.pdf), la mayoría de los desarrolladores utilizan OpenJDK.
+
+**¿Qué herramientas puedo utilizar para el desarrollo?**
+
+Hay un sin fin de herramientas para el desarrollo, quizas las dos mas importantes son:
+- [IntelliJ IDEA Community Edition](https://www.jetbrains.com/idea/) – IntelliJ es el IDE más utilizado para el desarrollo.
+
+- [Eclipse](https://www.eclipse.org/downloads/) – Eclipse es otra opción IDE para el desarrollo. La mayoría de los complementos son gratuitos y cuentan con una amplia comunidad de desarrolladores que los actualizan con frecuencia.
+
+Tenga en cuenta que existen otros IDE, pero según el [Informe Snyk 2021](https://res.cloudinary.com/snyk/image/upload/v1623860216/reports/jvm-ecosystem-report-2021.pdf), la mayoría de Los desarrolladores de JVM utilizan Eclipse e Intellij, pero el uso del código de Visual Studio está creciendo en el último año.
