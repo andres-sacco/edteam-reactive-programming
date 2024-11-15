@@ -40,7 +40,7 @@ public class ReservationService {
 
     @Autowired
     public ReservationService(ReservationRepository repository, ConversionService conversionService,
-                              CatalogConnector catalogConnector) {
+            CatalogConnector catalogConnector) {
         this.repository = repository;
         this.conversionService = conversionService;
         this.catalogConnector = catalogConnector;
@@ -49,14 +49,11 @@ public class ReservationService {
     public Flux<ReservationDTO> getReservations(SearchReservationCriteriaDTO criteria) {
         Pageable pageable = PageRequest.of(criteria.getPageActual(), criteria.getPageSize());
 
-        List<Reservation> reservations = repository.findAll(ReservationSpecification.withSearchCriteria(criteria), pageable);
+        List<Reservation> reservations = repository.findAll(ReservationSpecification.withSearchCriteria(criteria),
+                pageable);
 
         return Flux.fromIterable(reservations)
-                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class))
-                //.zipWith(Flux.interval(Duration.ofSeconds(1)), (reservation, interval) -> reservation);
-                .concatMap(reservation -> Mono.just(conversionService.convert(reservation, ReservationDTO.class))
-                        .delayElement(Duration.ofMillis(1500)));  // Retardo de 1500 ms por cada elemento
-                //.delayElements(Duration.ofSeconds(2));
+                .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class));
     }
 
     public Mono<ReservationDTO> getReservationById(Long id) {

@@ -33,13 +33,26 @@ public class PaymentConsumer {
     public void listen(@Payload PaymentDTO message) {
         LOGGER.info("Received message: {}", message);
 
-        if (message.getStatus().equals(PaymentStatusDTO.ACCEPTED)) {
-            service.changeStatus(message.getId(), Status.FINISHED);
+        service.changeStatus(message.getId(), mapStatus(message.getStatus()))
+                .doOnSuccess(result -> LOGGER.info("Status changed successfully for message: {}", message))
+                .doOnError(error -> LOGGER.error("Error processing message: {}", message, error))
+                .subscribe(
+                        null,
+                        throwable -> handleProcessingError(throwable, message)
+                );
+    }
 
-        } else if (message.getStatus().equals(PaymentStatusDTO.IN_PROGRESS)) {
-            service.changeStatus(message.getId(), Status.IN_PROGRESS);
+    private Status mapStatus(PaymentStatusDTO status) {
+        if (status.equals(PaymentStatusDTO.ACCEPTED)) {
+            return Status.FINISHED;
+        } else if (status.equals(PaymentStatusDTO.IN_PROGRESS)) {
+            return Status.IN_PROGRESS;
         } else {
             throw new EdteamException(APIError.BAD_FORMAT);
         }
+    }
+
+    private void handleProcessingError(Throwable throwable, PaymentDTO message) {
+        LOGGER.error("Failed to process message: {}", message, throwable);
     }
 }

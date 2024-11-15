@@ -108,7 +108,7 @@ public class ReservationService {
         return Mono.empty();
     }
 
-    public void changeStatus(Long id, Status status) {
+    public Mono<Void> changeStatus(Long id, Status status) {
         Optional<Reservation> reservation = repository.findById(id);
         if (reservation.isEmpty()) {
             LOGGER.debug("Not exist reservation with the id {}", id);
@@ -119,7 +119,7 @@ public class ReservationService {
 
         ReservationTransactionDTO reservationTransaction = new ReservationTransactionDTO(id,
                 conversionService.convert(status, StatusDTO.class));
-        producer.sendMessage(reservationTransaction);
+        return producer.sendMessage(reservationTransaction);
     }
 
     private void checkCity(ReservationDTO reservationDTO) {
