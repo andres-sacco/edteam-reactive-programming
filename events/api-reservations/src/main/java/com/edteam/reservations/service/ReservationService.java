@@ -2,12 +2,12 @@ package com.edteam.reservations.service;
 
 import com.edteam.reservations.connector.CatalogConnector;
 import com.edteam.reservations.connector.response.CityDTO;
-import com.edteam.reservations.dto.SearchReservationCriteriaDTO;
-import com.edteam.reservations.dto.SegmentDTO;
+import com.edteam.reservations.dto.*;
 import com.edteam.reservations.enums.APIError;
 import com.edteam.reservations.exception.EdteamException;
-import com.edteam.reservations.dto.ReservationDTO;
+import com.edteam.reservations.messaging.producer.ReservationTransactionProducer;
 import com.edteam.reservations.model.Reservation;
+import com.edteam.reservations.model.Status;
 import com.edteam.reservations.repository.ReservationRepository;
 import com.edteam.reservations.specification.ReservationSpecification;
 import jakarta.validation.*;
@@ -38,25 +38,27 @@ public class ReservationService {
 
     private CatalogConnector catalogConnector;
 
+    private ReservationTransactionProducer producer;
+
     @Autowired
     public ReservationService(ReservationRepository repository, ConversionService conversionService,
-                              CatalogConnector catalogConnector) {
+            CatalogConnector catalogConnector, ReservationTransactionProducer producer) {
         this.repository = repository;
         this.conversionService = conversionService;
         this.catalogConnector = catalogConnector;
+        this.producer = producer;
     }
 
     public Flux<ReservationDTO> getReservations(SearchReservationCriteriaDTO criteria) {
         Pageable pageable = PageRequest.of(criteria.getPageActual(), criteria.getPageSize());
 
-        List<Reservation> reservations = repository.findAll(ReservationSpecification.withSearchCriteria(criteria), pageable);
+        List<Reservation> reservations = repository.findAll(ReservationSpecification.withSearchCriteria(criteria),
+                pageable);
 
         return Flux.fromIterable(reservations)
                 .mapNotNull(reservation -> conversionService.convert(reservation, ReservationDTO.class))
-                //.zipWith(Flux.interval(Duration.ofSeconds(1)), (reservation, interval) -> reservation);
                 .concatMap(reservation -> Mono.just(conversionService.convert(reservation, ReservationDTO.class))
-                        .delayElement(Duration.ofMillis(1500)));  // Retardo de 1500 ms por cada elemento
-                //.delayElements(Duration.ofSeconds(2));
+                        .delayElement(Duration.ofMillis(1500))); // Retardo de 1500 ms por cada elemento
     }
 
     public Mono<ReservationDTO> getReservationById(Long id) {
@@ -104,6 +106,20 @@ public class ReservationService {
         repository.deleteById(id);
 
         return Mono.empty();
+    }
+
+    public void changeStatus(Long id, Status status) {
+        Optional<Reservation> reservation = repository.findById(id);
+        if (reservation.isEmpty()) {
+            LOGGER.debug("Not exist reservation with the id {}", id);
+            throw new EdteamException(APIError.RESERVATION_NOT_FOUND);
+        }
+
+        repository.updateStatusById(id, status);
+
+        ReservationTransactionDTO reservationTransaction = new ReservationTransactionDTO(id,
+                conversionService.convert(status, StatusDTO.class));
+        producer.sendMessage(reservationTransaction);
     }
 
     private void checkCity(ReservationDTO reservationDTO) {
